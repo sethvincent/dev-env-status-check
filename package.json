@@ -1,0 +1,33 @@
+{
+  "name": "dev-env-status-check",
+  "version": "0.0.0",
+  "description": "Check the availability of common Node development environment dependencies",
+  "main": "index.js",
+  "dependencies": {
+    "command-exists": "^1.0.2",
+    "os-name": "^2.0.1",
+    "which": "^1.2.12"
+  },
+  "devDependencies": {
+    "standard": "^8.5.0"
+  },
+  "scripts": {
+    "test": "standard"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sethvincent/dev-env-status-check.git"
+  },
+  "keywords": [
+    "dev env",
+    "development environment",
+    "nodeschool",
+    "adventuretron"
+  ],
+  "author": "sethvincent",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/sethvincent/dev-env-status-check/issues"
+  },
+  "homepage": "https://github.com/sethvincent/dev-env-status-check#readme"
+}
