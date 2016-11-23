@@ -6,4 +6,21 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 
 ## Unreleased
 
+* ???
+
+## v1.0.0
+
+### Changed
+
+* switched from a function with callback to a stream that emits `data` events
+* limited the commands checked to `node`, `npm`, and `git` for now
+
+### Added
+
+* added minimal test
+
+## v0.0.0
+
+### Added
+
 * initial implementation focused on macOS

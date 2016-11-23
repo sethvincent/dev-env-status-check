@@ -36,7 +36,7 @@ This module needs to be tested and adapted for use on both linux and windows.
 
 There are ways this module can be smarter about detecting system dependencies. For example: what if a macOS user doesn't have `gcc` yet?
 
-The current implementation is a bunch of functions, and the status for each tool being checked is returned in one big object. Instead it could be cool if the interface was a stream, and each data event is the status object of the tool being checked. Then the app using this module can update the UI on completion of each tool check.
+For now this only checks node, npm, and git. It would be cool to accept arbitrary commands.
 
 Check out the [dev-env-status](https://github.com/dev-env-status) repo for additional improvements.
 
@@ -45,14 +45,6 @@ Check out the [dev-env-status](https://github.com/dev-env-status) repo for addit
 - `node`
 - `npm`
 - `git`
-
-If on macOS:
-
-- `brew` – optional, if you want to check for homebrew
-
-Optional:
-
-- `atom` – if you want to see if atom command-line tool is available
 
 ### Each tool returns an object with:
 
@@ -80,56 +72,42 @@ npm install --save dev-env-status-check
 ```js
 var check = require('dev-env-status-check')
 
-check({ skipAtom: true }, function (status) {
-  console.log(status)
+var stream = check()
+
+stream.on('data', function (data) {
+  if (data.type === 'os') {
+    console.log('operating system info:', data)
+  } else {
+    console.log('status of ' + data.command + ':', data)
+  }
 })
 ```
 
-### Example value of `status`
+Each data event returns an object with information about the computer.
+
+If the object has a `type` property of `os`, it contains information about the operating system:
 
 ```js
 {
-  os:{
-    arch: 'x64',
-    platform: 'darwin',
-    release: '16.1.0',
-    name: 'macOS Sierra'
-  },
-  node:{
-    exists: true,
-    path: '/Users/sdv/.nvm/versions/node/v6.9.1/bin/node',
-    version: 'v6.9.1'
-  },
-  npm:{
-    exists: true,
-    path: '/Users/sdv/.nvm/versions/node/v6.9.1/bin/npm',
-    version: '3.10.8'
-  },
-  git:{
-    exists: true,
-    path: '/usr/local/bin/git',
-    version: '2.9.0'
-  },
-  atom:{
-    exists: true,
-    path: '/usr/local/bin/atom',
-    version: '1.12.4'
-  },
-  homebrew:{
-    exists: true,
-    path: '/usr/local/bin/brew',
-    version: '1.0.6-63-g0546d90'}
-  }
+  type: 'os',
+  arch: 'x64',
+  platform: 'darwin',
+  release: '16.1.0',
+  name: 'macOS Sierra'
+}
 ```
 
-## Documentation
-- [Getting started](docs/getting-started.md)
-- [Related modules](docs/related-modules.md)
-- [API](docs/api.md)
-- [Tests](tests/)
+If the object has a `type` property of `command`, it contains information about one of the commands. For example:
 
-### Examples
-- [Basic example](examples/basic.js)
+```js
+{
+  type: 'command',
+  command: 'node',
+  exists: true,
+  path: '/Users/sdv/.nvm/versions/node/v6.9.1/bin/node',
+  version: '6.9.1'
+}
+```
 
 ## Contributing
 

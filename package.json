@@ -5,14 +5,18 @@
   "main": "index.js",
   "dependencies": {
     "command-exists": "^1.0.2",
+    "each-async": "^1.1.1",
     "os-name": "^2.0.1",
-    "which": "^1.2.12"
+    "tape": "^4.6.3",
+    "through2": "^2.0.1",
+    "which": "^1.2.12",
+    "xtend": "^4.0.1"
   },
   "devDependencies": {
     "standard": "^8.5.0"
   },
   "scripts": {
-    "test": "standard"
+    "test": "standard && node tests/*.js"
   },
   "repository": {
     "type": "git",

@@ -1,171 +1,91 @@
 var os = require('os')
 var exec = require('child_process').exec
 var exists = require('command-exists')
-var which = require('which')
+var through = require('through2')
+var each = require('each-async')
 var osName = require('os-name')
+var which = require('which')
+var xtend = require('xtend')
 
-module.exports = function (opts, done) {
-  var status = {
-    os: {
-      arch: os.arch(),
-      platform: os.platform(),
-      release: os.release(),
-      name: osName(os.platform(), os.release())
-    },
-    node: {},
-    npm: {},
-    git: {},
-    atom: {},
-    homebrew: {}
+module.exports = function devEnvStatusCheck (options) {
+  var stream = through.obj()
+
+  var osInfo = {
+    type: 'os',
+    arch: os.arch(),
+    platform: os.platform(),
+    release: os.release(),
+    name: osName(os.platform(), os.release())
   }
 
- // TODO: clean up this nesting. preferably turn into a stream, emit data event for each command check
-  checkNode(status, function () {
-    checkNpm(status, function () {
-      checkGit(status, function () {
-        checkAtom(status, function () {
-          checkHomebrew(status, function () {
-            done(status)
-          })
-        })
-      })
+  stream.write(osInfo)
+
+  var tools = {
+    node: {
+      versionFormat: function (str) {
+        return str.split('v')[1]
+      }
+    },
+    npm: {
+      versionFormat: function (str) {
+        return str
+      }
+    },
+    git: {
+      versionFormat: function (str) {
+        return str.split('git version ')[1]
+      }
+    }
+  }
+
+  var keys = Object.keys(tools)
+
+  each(keys, function (key, i, next) {
+    var opts = tools[key]
+    check(key, opts, function (status) {
+      stream.write(xtend(status))
+      next()
     })
+  }, function () {
+    stream.end()
   })
 
-  // TODO: light refactor to remove repetitive code in check functions
-  // TODO: better error reporting
+  return stream
+}
 
-  function error (status, property, err, cb) {
-    status[property].err = err
-    cb()
+function check (tool, opts, callback) {
+  var versionCmd = opts.versionCommand || tool + ' --version'
+  var versionFormat = opts.versionFormat || function (str) { return str }
+
+  var status = {
+    type: 'command',
+    command: tool
   }
 
-  function checkNode (status, callback) {
-    exists('node', function (err, ok) {
-      if (err) return error(status, 'node', err, callback)
+  exists(tool, function (err, ok) {
+    if (err) return error(status, tool, err, callback)
 
-      if (ok) {
-        status.node.exists = true
-        which('node', function (err, cmdpath) {
-          if (err) return error(status, 'node', err, callback)
+    if (ok) {
+      status.exists = true
+      which(tool, function (err, cmdpath) {
+        if (err) return error(status, tool, err, callback)
 
-          status.node.path = cmdpath
-          exec('node --version', (err, stdout, stderr) => {
-            if (err) return error(status, 'node', err, callback)
+        status.path = cmdpath
+        exec(versionCmd, function (err, stdout, stderr) {
+          if (err) return error(status, tool, err, callback)
 
-            status.node.version = stdout.split('\n')[0]
-            callback()
-          })
+          status.version = versionFormat(stdout.split('\n')[0])
+          callback(status)
         })
-      } else {
-        status.node.exists = false
-        callback()
-      }
-    })
-  }
+      })
+    } else {
+      status.exists = false
+      callback(status)
+    }
+  })
+}
 
-  function checkNpm (status, callback) {
-    exists('npm', function (err, ok) {
-      if (err) return error(status, 'npm', err, callback)
-
-      if (ok) {
-        status.npm.exists = true
-        which('npm', function (err, cmdpath) {
-          if (err) return error(status, 'npm', err, callback)
-
-          status.npm.path = cmdpath
-          exec('npm --version', (err, stdout, stderr) => {
-            if (err) return error(status, 'npm', err, callback)
-
-            status.npm.version = stdout.split('\n')[0]
-            callback()
-          })
-        })
-      } else {
-        status.npm.exists = false
-        callback()
-      }
-    })
-  }
-
-  function checkGit (status, callback) {
-    exists('git', function (err, ok) {
-      if (err) return error(status, 'git', err, callback)
-
-      if (ok) {
-        status.git.exists = true
-        which('git', function (err, cmdpath) {
-          if (err) return error(status, 'git', err, callback)
-
-          status.git.path = cmdpath
-          exec('git --version', (err, stdout, stderr) => {
-            if (err) return error(status, 'git', err, callback)
-
-            stdout = stdout.split('git version ')[1]
-            status.git.version = stdout.split('\n')[0]
-            callback()
-          })
-        })
-      } else {
-        status.git.exists = false
-        callback()
-      }
-    })
-  }
-
-  function checkAtom (status, callback) {
-    if (opts.skipAtom) return callback()
-
-    exists('atom', function (err, ok) {
-      if (err) return error(status, 'atom', err, callback)
-
-      if (ok) {
-        status.atom.exists = true
-        which('atom', function (err, cmdpath) {
-          if (err) return error(status, 'atom', err, callback)
-
-          status.atom.path = cmdpath
-          exec('atom --version', (err, stdout, stderr) => {
-            if (err) return error(status, 'atom', err, callback)
-
-            stdout = stdout.split('Atom    : ')[1]
-            status.atom.version = stdout.split('\n')[0]
-            callback()
-          })
-        })
-      } else {
-        status.atom.exists = false
-        callback()
-      }
-    })
-  }
-
-  function checkHomebrew (status, callback) {
-    if (!status.os.platform === 'darwin' || opts.skipHomebrew) return callback()
-
-    exists('brew', function (err, ok) {
-      if (err) return error(status, 'homebrew', err, callback)
-
-      if (ok) {
-        status.homebrew.exists = true
-        which('brew', function (err, cmdpath) {
-          if (err) return error(status, 'homebrew', err, callback)
-
-          status.homebrew.path = cmdpath
-          exec('brew --version', (err, stdout, stderr) => {
-            if (err) return error(status, 'homebrew', err, callback)
-
-            stdout = stdout.split('Homebrew ')[1]
-            status.homebrew.version = stdout.split('\n')[0]
-            callback()
-          })
-        })
-      } else {
-        status.atom.exists = false
-        callback()
-      }
-    })
-  }
-
-  return status
+function error (status, property, err, cb) {
+  status[property].err = err
+  cb(status)
 }
