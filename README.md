@@ -24,7 +24,7 @@ This module intends to be a high-level approach to checking which dependencies a
 
 It's written with node, which may seem a little silly (what if they don't have node yet?!), but the intent is to use this inside Electron apps.
 
-The first electron app to use this module is [dev-env-status](https://github.com/dev-env-status), a simple app that shows the availability of each tool and how to install it if needed.
+The first electron app to use this module is [dev-env-status](https://github.com/sethvincent/dev-env-status), a simple app that shows the availability of each tool and how to install it if needed.
 
 ## Work in progress
 
@@ -38,7 +38,7 @@ There are ways this module can be smarter about detecting system dependencies. F
 
 For now this only checks node, npm, and git. It would be cool to accept arbitrary commands.
 
-Check out the [dev-env-status](https://github.com/dev-env-status) repo for additional improvements.
+Check out the [dev-env-status](https://github.com/sethvincent/dev-env-status) repo for additional improvements.
 
 ### Command-line tools that are checked:
 
